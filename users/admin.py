@@ -1,31 +1,22 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from django.utils.translation import gettext_lazy as _
+from .models import CustomUser, Profile
 
-from .models import CustomUser
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_active', 'date_joined')
+    search_fields = ('username', 'email')
+    list_filter = ('is_active', 'date_joined')
+    ordering = ('-date_joined',)
 
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'bio', 'avatar', 'followers_count', 'following_count')
+    search_fields = ('user__username', 'bio')
+    list_filter = ('user__is_active',)
 
-@admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
-    list_display = ('email', 'username', 'is_active', 'is_verified', 'date_joined', 'role')
-    list_filter = ('is_active', 'is_verified', 'is_staff', 'role')
-    search_fields = ('email', 'username')
-    ordering = ('email',)
+    def followers_count(self, obj):
+        return obj.followers.count()
 
-    fieldsets = (
-        (None, {'fields': ('email', 'username', 'password')}),
-        (_('Personal info'), {'fields': ()}),
-        (_('Permissions'), {
-            'fields': ('is_active', 'is_verified', 'is_staff', 'is_superuser', 'role', 'groups', 'user_permissions')
-        }),
-        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
-        (_('Verification'),
-         {'fields': ('email_verification_token', 'password_reset_token', 'password_reset_token_created_at')}),
-    )
+    def following_count(self, obj):
+        return obj.following.count()
 
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'username', 'password1', 'password2'),
-        }),
-    )
+admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(Profile, ProfileAdmin)
